@@ -1,43 +1,9 @@
-// import express from "express"
-// import http   from "http"
-// import { Server } from "socket.io"
-// const cors = require("cors")
+import express  from 'express';
+import http  from 'http';
+import { WebSocketServer } from'ws';
+import { v4 as uuidv4 } from 'uuid';
 
-// const app = express()
-// app.use(cors())
-
-// const server = http.createServer(app)
-
-// const io = new Server(server, {
-//   cors: {
-//     origin: "*"
-//   }
-// })
-
-// let users = {}
-
-// io.on("connection", (socket) => {
-//   console.log("User connected:", socket.id)
-
-//   socket.on("updateLocation", (data) => {
-//     users[socket.id] = data
-//     io.emit("usersLocation", users)
-//   })
-
-//   socket.on("disconnect", () => {
-//     delete users[socket.id]
-//     io.emit("usersLocation", users)
-//   })
-// })
-
-
-// export default server;
-
-const express = require('express');
-const http = require('http');
-const { WebSocketServer } = require('ws');
-const { v4: uuidv4 } = require('uuid');
-const cors = require('cors');
+import cors  from 'cors';
 
 const app = express();
 app.use(cors());
@@ -46,7 +12,6 @@ app.use(express.json());
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-// Store connected users: { id, lat, lng, connectedAt }
 const users = new Map();
 
 function broadcast(data) {
