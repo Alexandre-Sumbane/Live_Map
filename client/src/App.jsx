@@ -6,34 +6,48 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 
-const WS_URL = import.meta.env.VITE_WS_URL || "wss://live-map-ka2s.onrender.com";
+const WS_URL =
+  import.meta.env.VITE_WS_URL || "wss://live-map-ka2s.onrender.com";
 
 function idToColor(id) {
   const colors = [
-    "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
-    "#FFEAA7", "#DDA0DD", "#98D8C8", "#F7DC6F",
-    "#BB8FCE", "#85C1E9", "#82E0AA", "#F0B27A"
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1",
+    "#96CEB4",
+    "#FFEAA7",
+    "#DDA0DD",
+    "#98D8C8",
+    "#F7DC6F",
+    "#BB8FCE",
+    "#85C1E9",
+    "#82E0AA",
+    "#F0B27A",
   ];
   let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < id.length; i++)
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
 }
 
 export default function App() {
-  const [myId, setMyId]         = useState(null);
-  const [users, setUsers]       = useState([]);
+  const [myId, setMyId] = useState(null);
+  const [users, setUsers] = useState([]);
   const [myCoords, setMyCoords] = useState(null);
   const [wsStatus, setWsStatus] = useState("connecting");
   const [geoError, setGeoError] = useState(null);
 
-  const wsRef         = useRef(null);
-  const mapRef        = useRef(null);  
-  const leafletMapRef = useRef(null);  
-  const markersRef    = useRef({});
-  const hasPannedRef  = useRef(false);
-
+  const wsRef = useRef(null);
+  const mapRef = useRef(null);
+  const leafletMapRef = useRef(null);
+  const markersRef = useRef({});
+  const hasPannedRef = useRef(false);
 
   const sendLocation = useCallback((lat, lng) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -48,17 +62,23 @@ export default function App() {
       if (destroyed) return;
       ws = new WebSocket(WS_URL);
       wsRef.current = ws;
-      ws.onopen    = () => setWsStatus("connected");
-      ws.onclose   = () => { setWsStatus("disconnected"); setTimeout(connect, 3000); };
-      ws.onerror   = () => setWsStatus("error");
+      ws.onopen = () => setWsStatus("connected");
+      ws.onclose = () => {
+        setWsStatus("disconnected");
+        setTimeout(connect, 3000);
+      };
+      ws.onerror = () => setWsStatus("error");
       ws.onmessage = (e) => {
         const d = JSON.parse(e.data);
         if (d.type === "your_id") setMyId(d.id);
-        if (d.type === "users")   setUsers(d.users);
+        if (d.type === "users") setUsers(d.users);
       };
     };
     connect();
-    return () => { destroyed = true; ws?.close(); };
+    return () => {
+      destroyed = true;
+      ws?.close();
+    };
   }, []);
 
   useEffect(() => {
@@ -87,7 +107,11 @@ export default function App() {
     };
 
     navigator.geolocation.getCurrentPosition(onSuccess, onError, opts);
-    const watcher = navigator.geolocation.watchPosition(onSuccess, onError, opts);
+    const watcher = navigator.geolocation.watchPosition(
+      onSuccess,
+      onError,
+      opts,
+    );
     return () => navigator.geolocation.clearWatch(watcher);
   }, [sendLocation]);
 
@@ -95,16 +119,26 @@ export default function App() {
   useEffect(() => {
     if (!mapRef.current || leafletMapRef.current) return;
 
-    const map = L.map(mapRef.current, { zoomControl: true }).setView([20, 0], 2);
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-      attribution: '&copy; Esri &copy; OpenStreetMap',
-      maxZoom: 19,
-    }).addTo(map);
+    const map = L.map(mapRef.current, { zoomControl: true }).setView(
+      [20, 0],
+      2,
+    );
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution: "&copy; Esri &copy; OpenStreetMap",
+        maxZoom: 19,
+      },
+    ).addTo(map);
 
     // Nomes de ruas e cidades por cima do satelite
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
-      maxZoom: 19, opacity: 0.8,
-    }).addTo(map);
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 19,
+        opacity: 0.8,
+      },
+    ).addTo(map);
 
     leafletMapRef.current = map;
   }, []);
@@ -114,10 +148,10 @@ export default function App() {
     const map = leafletMapRef.current;
     if (!map) return;
 
-    const currentIds = new Set(users.map(u => u.id));
+    const currentIds = new Set(users.map((u) => u.id));
 
     // Remove stale markers
-    Object.keys(markersRef.current).forEach(id => {
+    Object.keys(markersRef.current).forEach((id) => {
       if (!currentIds.has(id)) {
         markersRef.current[id].remove();
         delete markersRef.current[id];
@@ -125,11 +159,11 @@ export default function App() {
     });
 
     // Add / update markers
-    users.forEach(user => {
+    users.forEach((user) => {
       if (user.lat == null || user.lng == null) return;
-      const isMe  = user.id === myId;
+      const isMe = user.id === myId;
       const color = idToColor(user.id);
-      const size  = isMe ? 22 : 14;
+      const size = isMe ? 22 : 14;
 
       const icon = L.divIcon({
         className: "",
@@ -140,7 +174,7 @@ export default function App() {
           box-shadow:0 0 ${isMe ? 14 : 6}px ${color};
           ${isMe ? "animation:pulse 2s infinite;" : ""}
         "></div>`,
-        iconSize:   [size, size],
+        iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
 
@@ -150,7 +184,9 @@ export default function App() {
       } else {
         markersRef.current[user.id] = L.marker([user.lat, user.lng], { icon })
           .addTo(map)
-          .bindPopup(`<b>${isMe ? "You" : "User"}</b><br><code>${user.lat.toFixed(5)}, ${user.lng.toFixed(5)}</code>`);
+          .bindPopup(
+            `<b>${isMe ? "You" : "User"}</b><br><code>${user.lat.toFixed(5)}, ${user.lng.toFixed(5)}</code>`,
+          );
       }
     });
 
@@ -161,7 +197,12 @@ export default function App() {
     }
   }, [users, myId, myCoords]);
 
-  const wsColor = { connected: "#4ECDC4", disconnected: "#FF6B6B", connecting: "#F7DC6F", error: "#FF6B6B" };
+  const wsColor = {
+    connected: "#4ECDC4",
+    disconnected: "#FF6B6B",
+    connecting: "#F7DC6F",
+    error: "#FF6B6B",
+  };
 
   return (
     <>
@@ -187,6 +228,22 @@ export default function App() {
           padding:18px; width:272px; max-height:calc(100vh - 32px);
           overflow-y:auto; animation:fadeIn 0.4s ease;
         }
+
+        @media (max-width: 600px) {
+  .panel {
+    top: auto;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 180px;
+    border-radius: 16px 16px 0 0;
+    padding: 12px;
+    overflow-y: scroll;
+  }
+  .toggle-btn {
+    display: none; /* opcional */
+  }
+}
         .panel::-webkit-scrollbar { width:3px; }
         .panel::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:10px; }
 
@@ -257,7 +314,10 @@ export default function App() {
           <div className="subtitle">Real-time location sharing</div>
 
           <div className="status-row">
-            <div className="dot" style={{ background: wsColor[wsStatus] || "#888" }} />
+            <div
+              className="dot"
+              style={{ background: wsColor[wsStatus] || "#888" }}
+            />
             <span className="status-text">{wsStatus}</span>
           </div>
 
@@ -288,31 +348,43 @@ export default function App() {
 
           <div className="counter">
             <span className="online-dot" />
-            {users.filter(u => u.lat != null).length} online
+            {users.filter((u) => u.lat != null).length} online
           </div>
           <div className="section-label">Connected users</div>
           <div className="users-list">
-            {users.filter(u => u.lat != null).length === 0 ? (
+            {users.filter((u) => u.lat != null).length === 0 ? (
               <div className="no-users">No users with location yet</div>
             ) : (
-              users.filter(u => u.lat != null).map(user => {
-                const isMe = user.id === myId;
-                return (
-                  <div
-                    key={user.id}
-                    className="user-item"
-                    title="Click to zoom to this user"
-                    onClick={() => leafletMapRef.current?.flyTo([user.lat, user.lng], 14)}
-                  >
-                    <div className="user-dot" style={{ background: idToColor(user.id), boxShadow: `0 0 6px ${idToColor(user.id)}` }} />
-                    <div className="user-info">
-                      {isMe && <span className="me-badge">YOU</span>}
-                      <div className="user-coords">{user.lat.toFixed(5)}, {user.lng.toFixed(5)}</div>
-                      <div className="user-uid">{user.id}</div>
+              users
+                .filter((u) => u.lat != null)
+                .map((user) => {
+                  const isMe = user.id === myId;
+                  return (
+                    <div
+                      key={user.id}
+                      className="user-item"
+                      title="Click to zoom to this user"
+                      onClick={() =>
+                        leafletMapRef.current?.flyTo([user.lat, user.lng], 14)
+                      }
+                    >
+                      <div
+                        className="user-dot"
+                        style={{
+                          background: idToColor(user.id),
+                          boxShadow: `0 0 6px ${idToColor(user.id)}`,
+                        }}
+                      />
+                      <div className="user-info">
+                        {isMe && <span className="me-badge">YOU</span>}
+                        <div className="user-coords">
+                          {user.lat.toFixed(5)}, {user.lng.toFixed(5)}
+                        </div>
+                        <div className="user-uid">{user.id}</div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })
             )}
           </div>
         </div>
