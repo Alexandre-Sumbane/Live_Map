@@ -126,7 +126,7 @@ export default function App() {
     L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       {
-        attribution: "&copy; Esri &copy; OpenStreetMap",
+        //attribution: "&copy; Esri &copy; OpenStreetMap",
         maxZoom: 19,
       },
     ).addTo(map);
