@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon app.js",
-    "start": "node -r sucrase/register server.js"
+    "start": "node -r sucrase/register app.js"
   },
   "keywords": [],
   "author": "",
